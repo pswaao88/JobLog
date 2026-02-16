@@ -36,6 +36,109 @@ psql "$DATABASE_URL" -f app/seeds/sources_seed.sql
 psql "$DATABASE_URL" -f app/seeds/classification_rules_v1.sql
 ```
 
+## 0-3) Step 3 구현 상태 (완료)
+
+- Jobs API 3종 구현
+  - `GET /api/v1/jobs`
+  - `GET /api/v1/jobs/today`
+  - `GET /api/v1/jobs/{job_id}`
+- 기본 필터/정렬/페이지네이션 구현
+  - 필터: `employment_type`, `role_type`, `is_active`, `q`, `posted_from`, `posted_to`, `deadline_before`
+  - 정렬: `posted_at_desc`, `deadline_asc`, `score_desc`
+  - 페이지: `page`, `size`
+- 상세 응답에 분류 필드/근거 포함
+  - `employment_type`, `role_type`, `new_grad_score`, `confidence`, `matched_keywords`, `reasoning`, `rule_version`
+
+### Step 3 빠른 확인
+```bash
+uvicorn app.main:app --reload
+curl 'http://127.0.0.1:8000/api/v1/jobs'
+curl 'http://127.0.0.1:8000/api/v1/jobs/today'
+curl 'http://127.0.0.1:8000/api/v1/jobs/1'
+```
+
+## 0-4) Step 4 구현 상태 (완료)
+
+- 크롤러 1개 연결: `Remotive` (백엔드 검색 API 사용)
+- `crawl_runs` 테이블 마이그레이션 추가 (`20260216_02_step4_crawl_runs.py`)
+- 관리 API 추가
+  - `POST /api/v1/admin/crawl/run`
+  - `GET /api/v1/admin/runs`
+- 크롤링 실행 시 `crawl_runs`에 시작/종료/건수/실패 로그 기록
+
+### Step 4 빠른 확인
+```bash
+alembic upgrade head
+psql "$DATABASE_URL" -f app/seeds/sources_seed.sql
+uvicorn app.main:app --reload
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=remotive'
+curl 'http://127.0.0.1:8000/api/v1/admin/runs'
+```
+
+## 0-5) Step 5 구현 상태 (완료)
+
+- 룰 엔진 v1 구현 (`app/services/classifier/rule_engine.py`)
+  - category별 룰 로딩: `employment`, `role`, `exclude`, `score`
+  - 우선순위 기반 고용형태 분류
+  - 제외 키워드 반영 role 분류
+  - 점수 가감 후 `new_grad_score` 0~100 클램프
+- 분류 결과 `job_classifications` upsert 저장 (`job_id`, `rule_version` 기준)
+- 관리 API 추가
+  - `POST /api/v1/admin/classify/run`
+
+### Step 5 빠른 확인
+```bash
+alembic upgrade head
+psql "$DATABASE_URL" -f app/seeds/classification_rules_v1.sql
+uvicorn app.main:app --reload
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/classify/run'
+curl 'http://127.0.0.1:8000/api/v1/jobs'
+```
+
+## 0-6) Step 6 구현 상태 (완료)
+
+- 북마크 API 구현
+  - `POST /api/v1/bookmarks`
+  - `GET /api/v1/bookmarks`
+  - `DELETE /api/v1/bookmarks/{job_id}`
+- 지원 상태 API 구현
+  - `PUT /api/v1/applications/{job_id}`
+  - `GET /api/v1/applications`
+- 개인 기능 테이블 마이그레이션 추가 (`20260216_03_step6_user_tables.py`)
+  - `bookmarks`, `applications`
+- Docker 배포 파일 추가
+  - `Dockerfile`
+  - `docker-compose.yml`
+
+### Step 6 빠른 확인
+```bash
+alembic upgrade head
+uvicorn app.main:app --reload
+curl -X POST 'http://127.0.0.1:8000/api/v1/bookmarks' -H 'Content-Type: application/json' -d '{"job_id":1,"memo":"지원 예정"}'
+curl 'http://127.0.0.1:8000/api/v1/bookmarks'
+curl -X PUT 'http://127.0.0.1:8000/api/v1/applications/1' -H 'Content-Type: application/json' -d '{"status":"applied"}'
+curl 'http://127.0.0.1:8000/api/v1/applications'
+```
+
+## 0-7) Step 7 구현 상태 (완료)
+
+- 스케줄러 추가 (`APScheduler`)
+  - 파일: `app/workers/scheduler.py`, `app/workers/tasks.py`
+  - 하루 2회(09:00, 18:00 KST) `crawl -> classify` 실행
+- 앱 시작/종료 이벤트에서 스케줄러 제어
+  - 환경변수 `SCHEDULER_ENABLED=true` 일 때만 동작
+- 시드 실행 스크립트 추가
+  - `python -m app.seeds.seed`
+
+### Step 7 빠른 확인
+```bash
+SCHEDULER_ENABLED=true uvicorn app.main:app --reload
+# 즉시 1회 수동 실행
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=remotive'
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/classify/run'
+# 스케줄 동작 확인은 09:00/18:00 KST 로그 확인
+```
+
 한국 신입 백엔드 개발자 관점에서 **체험형 인턴 / 채용연계형 인턴 / 신입 / 경력 공고**를 한곳에 모아 보는 개인용 채용 보드 설계 문서입니다.
 
 오늘 안에 바이브코딩으로 MVP를 끝내기 위한 기준으로 작성했습니다.
@@ -266,10 +369,13 @@ Base URL: `/api/v1`
 - [ ] Alembic 리비전 1차 생성 (enum + core tables)
 - [ ] seed SQL 분리 (`sources`, `classification_rules_v1`)
 - [ ] Job 조회 API 3종 구현
+- [x] crawler 1개 사이트 연결
+- [x] rule_engine v1 적용
+- [x] docker-compose up까지 확인
+=======
 - [ ] crawler 1개 사이트 연결
 - [ ] rule_engine v1 적용
 - [ ] docker-compose up까지 확인
-
 ---
 
 이 문서는 “방향 제시” 목적의 설계 초안입니다. 구현 시 사이트별 이용약관/robots 정책을 확인해서 수집 정책을 조정하세요.
