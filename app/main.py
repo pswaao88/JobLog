@@ -10,6 +10,7 @@ from app.core.config import get_settings
 from app.core.db import check_db_connection
 from app.workers.scheduler import start_scheduler, stop_scheduler
 
+
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
 app.include_router(health_router, prefix="/api/v1")
@@ -17,6 +18,7 @@ app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(bookmarks_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
+n
 
 
 @app.on_event("startup")
@@ -37,7 +39,7 @@ def on_shutdown() -> None:
     if settings.scheduler_enabled:
         stop_scheduler()
         print("[shutdown] scheduler stopped")
-
+main
 
 @app.get("/")
 def root() -> JSONResponse:

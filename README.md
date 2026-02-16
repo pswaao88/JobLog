@@ -372,7 +372,10 @@ Base URL: `/api/v1`
 - [x] crawler 1개 사이트 연결
 - [x] rule_engine v1 적용
 - [x] docker-compose up까지 확인
-
+=======
+- [ ] crawler 1개 사이트 연결
+- [ ] rule_engine v1 적용
+- [ ] docker-compose up까지 확인
 ---
 
 이 문서는 “방향 제시” 목적의 설계 초안입니다. 구현 시 사이트별 이용약관/robots 정책을 확인해서 수집 정책을 조정하세요.
