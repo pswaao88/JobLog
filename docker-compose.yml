@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -12,6 +10,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d joblog"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   api:
     build:
@@ -28,7 +31,8 @@ services:
     ports:
       - "40001:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     command: >
       bash -lc "alembic upgrade head && python -m app.seeds.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 

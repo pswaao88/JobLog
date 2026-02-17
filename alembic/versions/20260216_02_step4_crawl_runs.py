@@ -23,13 +23,11 @@ run_status_enum = postgresql.ENUM(
     "partial_fail",
     "failed",
     name="run_status_enum",
+    create_type=False,
 )
 
 
 def upgrade() -> None:
-    bind = op.get_bind()
-    run_status_enum.create(bind, checkfirst=True)
-
     op.create_table(
         "crawl_runs",
         sa.Column("id", sa.BigInteger(), sa.Identity(always=False), primary_key=True),

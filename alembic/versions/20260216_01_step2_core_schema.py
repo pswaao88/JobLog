@@ -25,6 +25,7 @@ employment_type_enum = postgresql.ENUM(
     "experienced",
     "unknown",
     name="employment_type_enum",
+    create_type=False,
 )
 
 role_type_enum = postgresql.ENUM(
@@ -36,6 +37,7 @@ role_type_enum = postgresql.ENUM(
     "devops",
     "unknown",
     name="role_type_enum",
+    create_type=False,
 )
 
 run_status_enum = postgresql.ENUM(
@@ -44,6 +46,7 @@ run_status_enum = postgresql.ENUM(
     "partial_fail",
     "failed",
     name="run_status_enum",
+    create_type=False,
 )
 
 
