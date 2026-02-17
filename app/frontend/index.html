@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobLog Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <div class="layout">
+      <aside class="sidebar panel">
+        <div class="brand">
+          <h1>JobLog</h1>
+          <p class="muted">신입 백엔드 공고 대시보드</p>
+        </div>
+
+        <nav>
+          <button class="nav-btn active" data-view="all">전체 공고</button>
+          <button class="nav-btn" data-view="today">오늘 올라온 공고</button>
+          <button class="nav-btn" data-view="bookmarks">북마크</button>
+          <button class="nav-btn" data-view="applications">지원 현황</button>
+        </nav>
+
+        <div class="api-indicator">
+          <span>API</span>
+          <code id="api-base"></code>
+        </div>
+      </aside>
+
+      <main class="content">
+        <header class="topbar panel">
+          <div>
+            <h2 id="view-title">전체 공고</h2>
+            <p class="muted">원티드/잡코리아 스타일을 참고한 카드 대시보드</p>
+          </div>
+          <div class="topbar-actions">
+            <button id="refresh-btn">새로고침</button>
+          </div>
+        </header>
+
+        <section class="filters panel">
+          <input id="search-input" placeholder="회사명/제목 검색" />
+          <select id="employment-filter">
+            <option value="">고용형태 전체</option>
+            <option value="intern_convertible">채용연계형 인턴</option>
+            <option value="intern_experience">체험형 인턴</option>
+            <option value="new_grad">신입</option>
+            <option value="experienced">경력</option>
+          </select>
+          <select id="sort-filter">
+            <option value="posted_at_desc">최신순</option>
+            <option value="deadline_asc">마감임박순</option>
+            <option value="score_desc">신입적합도순</option>
+          </select>
+        </section>
+
+        <section id="stats" class="stats"></section>
+        <section id="error-banner" class="error-banner hidden"></section>
+        <section id="cards" class="cards"></section>
+      </main>
+    </div>
+
+    <template id="job-card-template">
+      <article class="card panel">
+        <div class="card-header">
+          <div>
+            <h3 class="title"></h3>
+            <p class="company"></p>
+          </div>
+          <span class="badge role"></span>
+        </div>
+        <div class="meta">
+          <span class="badge employment"></span>
+          <span class="score"></span>
+          <span class="posted"></span>
+        </div>
+        <div class="actions">
+          <a class="link" target="_blank" rel="noreferrer">공고 보기</a>
+          <button class="bookmark-btn">북마크</button>
+          <button class="apply-btn">지원완료</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
