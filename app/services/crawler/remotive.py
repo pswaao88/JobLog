@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime
 from urllib.parse import urlparse
-from urllib.request import urlopen
 
 from app.services.crawler.base import BaseCrawler, CrawlJob
+from app.services.crawler.http_client import fetch_json
 
 
 class RemotiveCrawler(BaseCrawler):
@@ -13,8 +12,7 @@ class RemotiveCrawler(BaseCrawler):
     endpoint = "https://remotive.com/api/remote-jobs?search=backend"
 
     def fetch_jobs(self) -> list[CrawlJob]:
-        with urlopen(self.endpoint, timeout=15) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+        payload = fetch_json(self.endpoint)
 
         jobs: list[CrawlJob] = []
         for item in payload.get("jobs", []):

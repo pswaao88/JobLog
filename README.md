@@ -60,6 +60,11 @@ curl 'http://127.0.0.1:8000/api/v1/jobs/1'
 ## 0-4) Step 4 구현 상태 (완료)
 
 - 크롤러 1개 연결: `Remotive` (백엔드 검색 API 사용)
+- 크롤러 다중 소스 확장
+  - `remotive`
+  - `moloco_gh` (Greenhouse)
+  - `sendbird_gh` (Greenhouse)
+  - `dunamu_gh` (Greenhouse)
 - `crawl_runs` 테이블 마이그레이션 추가 (`20260216_02_step4_crawl_runs.py`)
 - 관리 API 추가
   - `POST /api/v1/admin/crawl/run`
@@ -72,6 +77,10 @@ alembic upgrade head
 psql "$DATABASE_URL" -f app/seeds/sources_seed.sql
 uvicorn app.main:app --reload
 curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=remotive'
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=moloco_gh'
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=sendbird_gh'
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=dunamu_gh'
+python -m app.scripts.check_live_sources
 curl 'http://127.0.0.1:8000/api/v1/admin/runs'
 ```
 
@@ -135,6 +144,10 @@ curl 'http://127.0.0.1:8000/api/v1/applications'
 SCHEDULER_ENABLED=true uvicorn app.main:app --reload
 # 즉시 1회 수동 실행
 curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=remotive'
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=moloco_gh'
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=sendbird_gh'
+curl -X POST 'http://127.0.0.1:8000/api/v1/admin/crawl/run?source_code=dunamu_gh'
+python -m app.scripts.check_live_sources
 curl -X POST 'http://127.0.0.1:8000/api/v1/admin/classify/run'
 # 스케줄 동작 확인은 09:00/18:00 KST 로그 확인
 ```

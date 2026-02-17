@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.services.crawler.remotive import RemotiveCrawler
+from app.services.crawler.registry import get_crawler
 
 
 def run_crawl(db: Session, source_code: str = "remotive") -> dict[str, Any]:
@@ -35,7 +35,7 @@ def run_crawl(db: Session, source_code: str = "remotive") -> dict[str, Any]:
     failed_count = 0
     error_message: str | None = None
 
-    crawler = RemotiveCrawler()
+    crawler = get_crawler(source_code)
 
     try:
         jobs = crawler.fetch_jobs()
