@@ -139,6 +139,26 @@ curl -X POST 'http://127.0.0.1:8000/api/v1/admin/classify/run'
 # 스케줄 동작 확인은 09:00/18:00 KST 로그 확인
 ```
 
+## 0-8) 프론트 대시보드 추가 (완료)
+
+- 정적 프론트 UI 추가
+  - `app/frontend/index.html`
+  - `app/frontend/styles.css`
+  - `app/frontend/app.js`
+- FastAPI에서 정적 파일 제공
+  - `GET /ui` (대시보드)
+  - `/frontend/*` (정적 파일)
+- 화면 구성
+  - 사이드바 + 필터 + 카드형 공고 리스트
+  - 뷰 전환: 전체/오늘/북마크/지원현황
+  - 카드 액션: 북마크 저장, 지원완료 업데이트
+
+### 프론트 빠른 확인
+```bash
+uvicorn app.main:app --reload
+open http://127.0.0.1:8000/ui
+```
+
 한국 신입 백엔드 개발자 관점에서 **체험형 인턴 / 채용연계형 인턴 / 신입 / 경력 공고**를 한곳에 모아 보는 개인용 채용 보드 설계 문서입니다.
 
 오늘 안에 바이브코딩으로 MVP를 끝내기 위한 기준으로 작성했습니다.
@@ -372,6 +392,7 @@ Base URL: `/api/v1`
 - [x] crawler 1개 사이트 연결
 - [x] rule_engine v1 적용
 - [x] docker-compose up까지 확인
+
 =======
 - [ ] crawler 1개 사이트 연결
 - [ ] rule_engine v1 적용
