@@ -3,7 +3,28 @@ const state = {
   jobs: [],
   bookmarks: [],
   applications: [],
+  apiBase: "",
 };
+
+function resolveApiBase() {
+  const forced = window.localStorage.getItem("JOBLOG_API_BASE");
+  if (forced) return forced.replace(/\/$/, "");
+
+  const { hostname, port, origin } = window.location;
+
+  // If served through reverse proxy on standard ports, use same-origin /api.
+  if (!port || port === "80" || port === "443") return origin;
+
+  // Local frontend port direct access fallback.
+  if (port === "40000") return `${window.location.protocol}//${hostname}:40001`;
+
+  return origin;
+}
+
+function apiPath(path) {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${state.apiBase}${normalized}`;
+}
 
 const endpoints = {
   all: () => "/api/v1/jobs",
@@ -24,70 +45,105 @@ function employmentLabel(value) {
     new_grad: "신입",
     experienced: "경력",
     unknown: "미분류",
+    planned: "지원예정",
+    applied: "지원완료",
+    interview: "면접",
+    rejected: "불합격",
+    pass: "최종합격",
   };
   return map[value] || value || "미분류";
 }
 
-async function fetchJson(url, options = {}) {
+function setError(message = "") {
+  const banner = document.getElementById("error-banner");
+  if (!message) {
+    banner.classList.add("hidden");
+    banner.textContent = "";
+    return;
+  }
+  banner.classList.remove("hidden");
+  banner.textContent = message;
+}
+
+async function fetchJson(path, options = {}) {
+  const url = apiPath(path);
   const res = await fetch(url, options);
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if (!res.ok) {
+    const msg = await res.text();
+    throw new Error(`${res.status} ${res.statusText} (${msg || "no body"})`);
+  }
   return res.json();
 }
 
 async function loadData() {
+  setError("");
+
   const search = document.getElementById("search-input").value.trim();
   const employment = document.getElementById("employment-filter").value;
   const sort = document.getElementById("sort-filter").value;
 
-  if (state.view === "all" || state.view === "today") {
-    const params = new URLSearchParams();
-    if (search) params.set("q", search);
-    if (employment) params.set("employment_type", employment);
-    params.set("sort", sort);
-    const data = await fetchJson(`${endpoints[state.view]()}?${params.toString()}`);
-    state.jobs = data.items || [];
-    renderJobs(state.jobs);
-    renderStats(data.total ?? state.jobs.length);
-    return;
-  }
+  try {
+    if (state.view === "all" || state.view === "today") {
+      const params = new URLSearchParams();
+      if (search) params.set("q", search);
+      if (employment) params.set("employment_type", employment);
+      params.set("sort", sort);
+      const data = await fetchJson(`${endpoints[state.view]()}?${params.toString()}`);
+      state.jobs = data.items || [];
+      renderJobs(state.jobs);
+      renderStats(data.total ?? state.jobs.length);
+      return;
+    }
 
-  if (state.view === "bookmarks") {
-    const data = await fetchJson(endpoints.bookmarks());
-    state.bookmarks = data.items || [];
-    renderBookmarkCards(state.bookmarks);
-    renderStats(data.total ?? state.bookmarks.length);
-    return;
-  }
+    if (state.view === "bookmarks") {
+      const data = await fetchJson(endpoints.bookmarks());
+      state.bookmarks = data.items || [];
+      renderBookmarkCards(state.bookmarks);
+      renderStats(data.total ?? state.bookmarks.length);
+      return;
+    }
 
-  const data = await fetchJson(endpoints.applications());
-  state.applications = data.items || [];
-  renderApplicationCards(state.applications);
-  renderStats(data.total ?? state.applications.length);
+    const data = await fetchJson(endpoints.applications());
+    state.applications = data.items || [];
+    renderApplicationCards(state.applications);
+    renderStats(data.total ?? state.applications.length);
+  } catch (error) {
+    renderEmpty("데이터를 불러오지 못했습니다.");
+    setError(`통신 실패: ${error.message} | API BASE: ${state.apiBase}`);
+  }
 }
 
 function renderStats(total) {
   const stats = document.getElementById("stats");
   stats.innerHTML = `
-    <div class="stat">총 <b>${total}</b>건</div>
-    <div class="stat">뷰: <b>${document.getElementById("view-title").textContent}</b></div>
+    <div class="stat"><span>총 건수</span><b>${total}</b></div>
+    <div class="stat"><span>현재 뷰</span><b>${document.getElementById("view-title").textContent}</b></div>
+    <div class="stat"><span>API 대상</span><b>${state.apiBase}</b></div>
   `;
 }
 
 function renderEmpty(message) {
   const cards = document.getElementById("cards");
-  cards.innerHTML = `<div class="empty">${message}</div>`;
+  cards.innerHTML = `<div class="empty panel">${message}</div>`;
 }
 
 function makeJobCard(item) {
   const tpl = document.getElementById("job-card-template");
   const node = tpl.content.cloneNode(true);
-  node.querySelector(".title").textContent = item.title;
-  node.querySelector(".company").textContent = item.company_name;
-  node.querySelector(".badge.role").textContent = item.role_type || "unknown";
+
+  node.querySelector(".title").textContent = item.title || "제목 없음";
+  node.querySelector(".company").textContent = item.company_name || "회사 미상";
+  node.querySelector(".badge.role").textContent = (item.role_type || "unknown").toUpperCase();
   node.querySelector(".badge.employment").textContent = employmentLabel(item.employment_type);
   node.querySelector(".score").textContent = `신입적합도 ${item.new_grad_score ?? 0}`;
   node.querySelector(".posted").textContent = `등록 ${formatDate(item.posted_at)}`;
-  node.querySelector(".link").href = item.url || "#";
+
+  const link = node.querySelector(".link");
+  link.href = item.url || "#";
+  if (!item.url) {
+    link.classList.add("disabled");
+    link.textContent = "링크 없음";
+  }
 
   node.querySelector(".bookmark-btn").addEventListener("click", async () => {
     try {
@@ -96,9 +152,10 @@ function makeJobCard(item) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ job_id: item.job_id, memo: "대시보드에서 저장" }),
       });
-      alert("북마크 저장됨");
+      setError("✅ 북마크 저장 완료");
+      setTimeout(() => setError(""), 1200);
     } catch (e) {
-      alert(`북마크 실패: ${e.message}`);
+      setError(`북마크 실패: ${e.message}`);
     }
   });
 
@@ -109,9 +166,10 @@ function makeJobCard(item) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "applied" }),
       });
-      alert("지원 상태 업데이트됨");
+      setError("✅ 지원 상태 업데이트 완료");
+      setTimeout(() => setError(""), 1200);
     } catch (e) {
-      alert(`업데이트 실패: ${e.message}`);
+      setError(`업데이트 실패: ${e.message}`);
     }
   });
 
@@ -170,5 +228,11 @@ function bindUi() {
   document.getElementById("sort-filter").addEventListener("change", loadData);
 }
 
-bindUi();
-loadData().catch((e) => renderEmpty(`데이터 조회 실패: ${e.message}`));
+function init() {
+  state.apiBase = resolveApiBase();
+  document.getElementById("api-base").textContent = state.apiBase;
+  bindUi();
+  loadData();
+}
+
+init();

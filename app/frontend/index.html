@@ -4,31 +4,44 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JobLog Dashboard</title>
-    <link rel="stylesheet" href="/frontend/styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
     <div class="layout">
-      <aside class="sidebar">
-        <h1>JobLog</h1>
-        <p class="muted">신입 백엔드 공고 대시보드</p>
+      <aside class="sidebar panel">
+        <div class="brand">
+          <h1>JobLog</h1>
+          <p class="muted">신입 백엔드 공고 대시보드</p>
+        </div>
+
         <nav>
           <button class="nav-btn active" data-view="all">전체 공고</button>
           <button class="nav-btn" data-view="today">오늘 올라온 공고</button>
           <button class="nav-btn" data-view="bookmarks">북마크</button>
           <button class="nav-btn" data-view="applications">지원 현황</button>
         </nav>
+
+        <div class="api-indicator">
+          <span>API</span>
+          <code id="api-base"></code>
+        </div>
       </aside>
 
       <main class="content">
-        <header class="topbar">
+        <header class="topbar panel">
           <div>
             <h2 id="view-title">전체 공고</h2>
-            <p class="muted">Wanted / LinkedIn 스타일의 카드형 레이아웃으로 빠르게 확인</p>
+            <p class="muted">원티드/잡코리아 스타일을 참고한 카드 대시보드</p>
           </div>
-          <button id="refresh-btn">새로고침</button>
+          <div class="topbar-actions">
+            <button id="refresh-btn">새로고침</button>
+          </div>
         </header>
 
-        <section class="filters">
+        <section class="filters panel">
           <input id="search-input" placeholder="회사명/제목 검색" />
           <select id="employment-filter">
             <option value="">고용형태 전체</option>
@@ -45,12 +58,13 @@
         </section>
 
         <section id="stats" class="stats"></section>
+        <section id="error-banner" class="error-banner hidden"></section>
         <section id="cards" class="cards"></section>
       </main>
     </div>
 
     <template id="job-card-template">
-      <article class="card">
+      <article class="card panel">
         <div class="card-header">
           <div>
             <h3 class="title"></h3>
@@ -71,6 +85,6 @@
       </article>
     </template>
 
-    <script src="/frontend/app.js" defer></script>
+    <script src="./app.js" defer></script>
   </body>
 </html>

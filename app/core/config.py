@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/joblog"
     rule_version: str = "v1.0.0"
     scheduler_enabled: bool = False
+    cors_origins: str = "http://localhost:40000,http://127.0.0.1:40000"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

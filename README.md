@@ -159,6 +159,11 @@ uvicorn app.main:app --reload
 open http://127.0.0.1:8000/ui
 ```
 
+### 프론트 통신 기준
+- 리버스 프록시 환경(80/443): 브라우저 origin 기준(`/api/...`)으로 호출
+- 프론트를 `http://127.0.0.1:40000`으로 직접 열면 API를 자동으로 `http://127.0.0.1:40001`로 호출
+- 필요 시 브라우저 콘솔에서 `localStorage.setItem("JOBLOG_API_BASE", "https://your-domain")`로 강제 지정 가능
+
 
 ## 0-9) 운영 배포 포트 구성 (업데이트)
 
