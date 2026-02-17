@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: joblog-db
+    environment:
+      POSTGRES_DB: joblog
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: joblog-api
+    environment:
+      APP_ENV: prod
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/joblog
+      RULE_VERSION: v1.0.0
+      SCHEDULER_ENABLED: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    command: >
+      bash -lc "alembic upgrade head && python -m app.seeds.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  pgdata:
