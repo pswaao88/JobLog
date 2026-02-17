@@ -159,6 +159,24 @@ uvicorn app.main:app --reload
 open http://127.0.0.1:8000/ui
 ```
 
+
+## 0-9) 운영 배포 포트 구성 (업데이트)
+
+- 프론트 컨테이너: `40000:80` (`nginx` 정적 서빙)
+- 백엔드 컨테이너: `40001:8000` (`FastAPI`)
+- `docker-compose.yml`에서 `db + api + frontend`를 한번에 빌드/기동
+
+### 배포 실행
+```bash
+docker compose up -d --build
+```
+
+### 점검
+```bash
+curl http://127.0.0.1:40000
+curl http://127.0.0.1:40001/api/v1/health
+```
+
 한국 신입 백엔드 개발자 관점에서 **체험형 인턴 / 채용연계형 인턴 / 신입 / 경력 공고**를 한곳에 모아 보는 개인용 채용 보드 설계 문서입니다.
 
 오늘 안에 바이브코딩으로 MVP를 끝내기 위한 기준으로 작성했습니다.
@@ -393,10 +411,6 @@ Base URL: `/api/v1`
 - [x] rule_engine v1 적용
 - [x] docker-compose up까지 확인
 
-=======
-- [ ] crawler 1개 사이트 연결
-- [ ] rule_engine v1 적용
-- [ ] docker-compose up까지 확인
 ---
 
 이 문서는 “방향 제시” 목적의 설계 초안입니다. 구현 시 사이트별 이용약관/robots 정책을 확인해서 수집 정책을 조정하세요.

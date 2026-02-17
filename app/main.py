@@ -4,7 +4,6 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-
 from app.api.v1.admin import router as admin_router
 from app.api.v1.applications import router as applications_router
 from app.api.v1.bookmarks import router as bookmarks_router
@@ -21,6 +20,7 @@ app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(bookmarks_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
+
 frontend_dir = Path(__file__).resolve().parent / "frontend"
 app.mount("/frontend", StaticFiles(directory=frontend_dir), name="frontend")
 
@@ -43,7 +43,7 @@ def on_shutdown() -> None:
     if settings.scheduler_enabled:
         stop_scheduler()
         print("[shutdown] scheduler stopped")
-main
+
 
 @app.get("/")
 def root() -> JSONResponse:
